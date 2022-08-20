@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  aws_serverless_auth_management:
+    build: .
+    container_name: aws_serverless_auth_management
+    command: 'sleep infinity'
+    privileged: true
+    image: nodejs_env:latest
+    volumes:
+      - ./:/home/ec2-user/aws_serverless_auth_management/
+      - /home/ec2-user/.aws/:/home/ec2-user/.aws
+    stdin_open: true
