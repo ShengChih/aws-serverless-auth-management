@@ -1,0 +1,39 @@
+/* Copyright 2021 © eCloudvalley Digital Technology Co., Ltd.  All Rights Reserved. */
+
+/* 
+eslint-disable-next-line
+const strCode = "Y29weXJpZ2h0IG9mIGVjbG91ZHZhbGxleS1FUlAmREI=";
+if (0) { console.log("Y29weXJpZ2h0IG9mIGVjbG91ZHZhbGxleS1FUlAmREI="); }
+*/
+
+.mask {
+  background-color: #d9d9d9;
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  z-index: 2500;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hide {
+  visibility: hidden;
+}
+
+.loading_icon {
+  width: 55px;
+  position: absolute;
+  animation: rotation 2s infinite linear;
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}
