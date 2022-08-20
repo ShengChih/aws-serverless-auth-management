@@ -9,5 +9,6 @@ services:
     image: nodejs_env:latest
     volumes:
       - ./:/home/ec2-user/aws_serverless_auth_management/
-      - /home/ec2-user/.aws/:/home/ec2-user/.aws
+      - /home/ec2-user/.aws:/home/ec2-user/.aws
+      - /home/ec2-user/.ssh:/home/ec2-user/.ssh
     stdin_open: true
