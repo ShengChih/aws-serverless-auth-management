@@ -2,9 +2,11 @@ lockfileVersion: 5.4
 
 specifiers:
   serverless: ^3.22.0
+  serverless-plugin-existing-s3: ^2.4.0
 
 dependencies:
   serverless: 3.22.0
+  serverless-plugin-existing-s3: 2.4.0
 
 packages:
 
@@ -2356,6 +2358,10 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+    dev: false
+
+  /serverless-plugin-existing-s3/2.4.0:
+    resolution: {integrity: sha512-BsOSOM5X4hFmX2U7WlUWvMooTega4fKGc547OiWTUwHtB/H1nBs5bQJxM4jHJLIODEoVLw8J8O90rlif/yHwuQ==}
     dev: false
 
   /serverless/3.22.0:
