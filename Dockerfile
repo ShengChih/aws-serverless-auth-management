@@ -5,6 +5,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     apt-get install -y locales \
     language-pack-en \
     build-essential \
+    python3 python3-pip python3-setuptools \
+    pip3 install --upgrade pip \
+    pip3 --no-cache-dir install --upgrade awscli \
     curl \
     sudo \
     vim \
@@ -42,3 +45,4 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
     nvm use --lts && \
     curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which zsh` PNPM_VERSION=$PNPM_VERSION zsh -
 ENV PATH=$PATH:/home/ec2-user/.nvm/versions/node/v$NODE_VER/bin:/home/ec2-user/.local/share/pnpm/:/home/ec2-user/aws_serverless_auth_management/node_modules/.bin
+CMD ["/usr/bin/zsh"]
