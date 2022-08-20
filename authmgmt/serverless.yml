@@ -1,0 +1,82 @@
+org: palapalado
+app: authmgmt
+service: authmgmt
+
+frameworkVersion: '3'
+
+resources:
+  Resources:
+    AuthServiceBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: palapalado.tk
+
+    AuthServiceBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: 'AuthServiceBucket'
+        PolicyDocument:
+          Statement:
+            - Effect: 'Allow'
+              Principal: '*'
+              Action:
+                - 's3:GetObject'
+              Resource:
+                Fn::Join:
+                  - ''
+                  - - 'arn:aws:s3:::'
+                    - Ref: 'AuthServiceBucket'
+                    - '/*'
+
+    AuthServiceCognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: palapalado.tk
+
+    AuthServiceCognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: palapaladoAuthmgmt
+        GenerateSecret: false
+        UserPoolId:
+          Ref: 'AuthServiceCognitoUserPool'
+
+  Outputs:
+    AuthServiceBucketURL:
+      Description: "Palapalado.tk Bucket Website URL"
+      Value: 
+        "Fn::GetAtt": [ AuthServiceBucket, WebsiteURL ]
+
+    AuthServiceCognitoUserPoolId:
+      Description: 'Palapalado Cognito User Pool ID'
+      Value:
+        Ref: 'AuthServiceCognitoUserPool'
+
+    AuthServiceCognitoUserPoolClientId:
+      Description: 'Palapalado Cognito User Pool Client ID'
+      Value:
+        Ref: 'AuthServiceCognitoUserPoolClient'
+#custom:
+#  wsgi:
+#    app: app.app
+#
+provider:
+  name: aws
+  region: us-east-1
+  profile: serverless-agent
+  stage: ${opt:stage, 'dev'}
+#  runtime: python3.8
+#  stage: dev
+#  profile: serverless-agent
+#
+#functions:
+#  api:
+#    handler: wsgi_handler.handler
+#    events:
+#      - httpApi: '*'
+#
+plugins:
+  - serverless-plugin-existing-s3
+#  - serverless-wsgi
+#  - serverless-python-requirements
