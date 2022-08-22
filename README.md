@@ -18,11 +18,16 @@ pnpm build
 
 ```
 cd authmgmt
-sls deploy --profile serverless-agent]
+sls config credentials --profile --provider aws --key [] --secret []
+sls deploy --aws-profile serverless-admin
 ```
 
 # upload frontend static files to s3
 
 ```
-aws --profile serverless-agent s3 sync --delete ./frontend/build s3://palapalado.tk/
+aws --profile serverless-admin s3 sync --delete ./frontend/build s3://palapalado.tk/
+
+npm i
+npm run build
+aws --profile serverless-admin s3 sync --delete ../wild-rydes/dist s3://palapalado.tk/
 ```

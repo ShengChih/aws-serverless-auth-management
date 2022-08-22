@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Typography,
   Link,
@@ -14,29 +14,15 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 
 
-function LoginForm() {
-  const [loginInfo, setLoginInfo] = useState({
-    email: "",
-    password: "",
-    showPassword: false
-  })
-
-  const handleChange =
-    (prop) => (event) => {
-      setLoginInfo({ ...loginInfo, [prop]: event.target.value });
-    };
-
-  const handleClickShowPassword = () => {
-    setLoginInfo({
-      ...loginInfo,
-      showPassword: !loginInfo.showPassword,
-    });
-  };
-
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
-
+function LoginForm({
+  email,
+  password,
+  showPassword,
+  handleChange,
+  handleClickShowPassword,
+  handleMouseDownPassword,
+  handleFormSubmit
+}) {
   return (
     <div>
       <Container maxWidth="sm">
@@ -44,13 +30,14 @@ function LoginForm() {
           <InputLabel htmlFor="email">email</InputLabel>
           <OutlinedInput label="email" id="email" type="text"
             onChange={handleChange('email')}
+            value={email}
           ></OutlinedInput>
         </FormControl>
         <FormControl fullWidth margin="dense" required variant="outlined">
           <InputLabel htmlFor="password">password</InputLabel>
           <OutlinedInput label="password" fullWidth id="password"
-            type={loginInfo?.showPassword ? 'text' : 'password'}
-            value={loginInfo?.password}
+            type={showPassword ? 'text' : 'password'}
+            value={password}
             onChange={handleChange('password')}
             endAdornment={
               <InputAdornment position="end">
@@ -60,14 +47,14 @@ function LoginForm() {
                   onMouseDown={handleMouseDownPassword}
                   edge="end"
                 >
-                  {loginInfo?.showPassword ? <VisibilityOff /> : <Visibility />}
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
             }
           ></OutlinedInput>
         </FormControl>
         <FormControl fullWidth margin="normal" variant="outlined">
-          <Button variant="contained" size="medium">Submit</Button>
+          <Button variant="contained" onClick={handleFormSubmit} size="medium">Submit</Button>
         </FormControl>
       </Container>
       <Container>

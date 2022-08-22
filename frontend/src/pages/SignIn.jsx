@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import LoginForm from '@/components/LoginForm'
+import LoginFormWrapper from '@/components/HoC/LoginFormWrapper'
 
 const SignIn = () => {
   return (
@@ -17,7 +17,7 @@ const SignIn = () => {
         height: '100%'
       }}
     >
-      <LoginForm />
+      <LoginFormWrapper />
     </Box >
   )
 }

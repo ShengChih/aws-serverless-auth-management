@@ -1,5 +1,3 @@
-org: palapalado
-app: authmgmt
 service: authmgmt
 
 frameworkVersion: '3'
@@ -59,12 +57,11 @@ resources:
         Ref: 'AuthServiceCognitoUserPoolClient'
 #custom:
 #  wsgi:
-#    app: app.app
 #
 provider:
   name: aws
   region: us-east-1
-  profile: serverless-agent
+  profile: serverless-admin
   stage: ${opt:stage, 'dev'}
 #  runtime: python3.8
 #  stage: dev
@@ -77,6 +74,14 @@ provider:
 #      - httpApi: '*'
 #
 plugins:
-  - serverless-plugin-existing-s3
+  - serverless-s3-sync
+
 #  - serverless-wsgi
 #  - serverless-python-requirements
+
+custom:
+  s3Sync:
+    - bucketName: palapalado.tk # required
+      localDir: ../wild-rydes/public # required
+      deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
+
