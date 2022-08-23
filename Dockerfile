@@ -6,8 +6,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     language-pack-en \
     build-essential \
     python3 python3-pip python3-setuptools \
-    pip3 install --upgrade pip \
-    pip3 --no-cache-dir install --upgrade awscli \
     curl \
     sudo \
     vim \
@@ -17,6 +15,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
     git-flow \
     tmux \
     zsh && \
+    pip3 install --upgrade pip && \
+    pip3 --no-cache-dir install --upgrade awscli && \
     useradd -ms /bin/bash ec2-user && \
     sudo usermod -aG sudo,root ec2-user && \
     echo "root:`tr -dc A-Za-z0-9 </dev/urandom | head -c 13`" > /home/ec2-user/root_passwd && \
