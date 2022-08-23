@@ -1,33 +1,36 @@
 import React from 'react';
-import { Link } from "react-router-dom";
-
 import {
-  Typography,
   FormControl,
   Container,
   OutlinedInput,
   InputLabel,
   InputAdornment,
   IconButton,
-  Button,
-  Box
+  Button
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 
 
-function LoginForm({
+function RegisteredForm({
+  username,
   email,
   password,
   showPassword,
   handleChange,
   handleClickShowPassword,
   handleMouseDownPassword,
-  handleFormSubmit,
-  signUpPath
+  handleFormSubmit
 }) {
   return (
     <div>
       <Container maxWidth="sm">
+        <FormControl fullWidth margin="dense" required variant="outlined">
+          <InputLabel htmlFor="username">username</InputLabel>
+          <OutlinedInput label="username" id="username" type="text"
+            onChange={handleChange('username')}
+            value={username}
+          ></OutlinedInput>
+        </FormControl>
         <FormControl fullWidth margin="dense" required variant="outlined">
           <InputLabel htmlFor="email">email</InputLabel>
           <OutlinedInput label="email" id="email" type="text"
@@ -56,30 +59,11 @@ function LoginForm({
           ></OutlinedInput>
         </FormControl>
         <FormControl fullWidth margin="normal" variant="outlined">
-          <Button variant="contained" onClick={handleFormSubmit} size="medium">Submit</Button>
-        </FormControl>
-      </Container>
-      <Container>
-        <FormControl fullWidth margin="normal">
-          <Box sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            alignItems: 'center'
-          }}>
-            <div style={{ display: 'flex', flexGrow: 0.45, height: '1px', backgroundColor: '#dbdbdb' }}></div>
-            <div style={{ display: 'flex', flexGrow: 0.1, justifyContent: 'center', color: 'rgba(0, 0, 0, 0.87)' }}>or</div>
-            <div style={{ display: 'flex', flexGrow: 0.45, height: '1px', backgroundColor: '#dbdbdb' }}></div>
-          </Box>
-        </FormControl>
-      </Container>
-      <Container>
-        <FormControl fullWidth margin="normal">
-          <Typography>Don't have an account? <Link to={signUpPath}>Sign Up</Link></Typography>
+          <Button variant="contained" onClick={handleFormSubmit} size="medium">Register</Button>
         </FormControl>
       </Container>
     </div>
   )
 }
 
-export default LoginForm
+export default RegisteredForm

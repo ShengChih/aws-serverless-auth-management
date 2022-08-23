@@ -6,7 +6,8 @@ const routes = [
         path: "/",
         exact: true,
         index: true,
-        element: <SignIn />
+        element: <SignIn />,
+        protected: true
     },
     {
         path: "/sign-in",

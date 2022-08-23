@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import LoginForm from '@/components/LoginForm'
-import {
-    CognitoIdentityProviderClient,
-    InitiateAuthCommand,
-    RespondToAuthChallengeCommand
-} from "@aws-sdk/client-cognito-identity-provider";
+import { useLoginQuery, useCompleteNewPasswordChallengeQuery } from './services/pokemon'
 
-
-const ClientId = process.env.REACT_APP_AWS_COGNITO_CLIENT_ID
-const REGION = process.env.REACT_APP_AWS_COGNITO_REGION
-const client = new CognitoIdentityProviderClient({
-    region: REGION
-});
+import { login, completeNewPasswordChallenge } from '@/services/AuthService'
 
 function LoginFormWrapper() {
     const [loginInfo, setLoginInfo] = useState({
@@ -38,48 +29,30 @@ function LoginFormWrapper() {
 
     const handleFormSubmit = async (event) => {
         try {
-            const initiateAuthParams = {
-                AuthFlow: process.env.REACT_APP_AWS_COGNITO_AUTH,
-                ClientId: ClientId,
-                AuthParameters: {
-                    USERNAME: loginInfo.email,
-                    PASSWORD: loginInfo.password,
-                }
-            }
-            const initiateAuthCmd = new InitiateAuthCommand(initiateAuthParams)
+            const { email, password } = loginInfo
             let {
                 AuthenticationResult,
                 ChallengeName,
-                ChallengeParameters,
                 Session
-            } = await client.send(initiateAuthCmd)
+            } = await login(email, password)
 
-            if (!AuthenticationResult && ChallengeName === 'NEW_PASSWORD_REQUIRED') {
-                const respond2AuthChallengeCmd = new RespondToAuthChallengeCommand({
-                    ChallengeName: ChallengeName,
-                    Session: Session,
-                    ClientId: ClientId,
-                    ChallengeResponses: {
-                        USERNAME: loginInfo.email,
-                        NEW_PASSWORD: loginInfo.password
-                    }
-                });
-
-                let {
-                    AuthenticationResult,
-                    ChallengeName,
-                    ChallengeParameters,
-                    Session
-                } = await client.send(respond2AuthChallengeCmd)
-
+            if (AuthenticationResult) {
                 localStorage.setItem('AccessToken', AuthenticationResult.AccessToken)
                 localStorage.setItem('RefreshToken', AuthenticationResult.RefreshToken)
                 localStorage.setItem('IdToken', AuthenticationResult.IdToken)
+                return
             }
 
-            localStorage.setItem('AccessToken', AuthenticationResult.AccessToken)
-            localStorage.setItem('RefreshToken', AuthenticationResult.RefreshToken)
-            localStorage.setItem('IdToken', AuthenticationResult.IdToken)
+            if (ChallengeName === 'NEW_PASSWORD_REQUIRED') {
+                // redirect set new password
+                let { AuthenticationResult } = await completeNewPasswordChallenge(Session, email, password)
+
+                if (AuthenticationResult) {
+                    localStorage.setItem('AccessToken', AuthenticationResult.AccessToken)
+                    localStorage.setItem('RefreshToken', AuthenticationResult.RefreshToken)
+                    localStorage.setItem('IdToken', AuthenticationResult.IdToken)
+                }
+            }
         } catch (err) {
             const errorResults = "Error" + err;
             console.log(errorResults)
@@ -92,6 +65,7 @@ function LoginFormWrapper() {
         handleClickShowPassword={handleClickShowPassword}
         handleMouseDownPassword={handleMouseDownPassword}
         handleFormSubmit={handleFormSubmit}
+        signUpPath={"/sign-up"}
     />
 }
 

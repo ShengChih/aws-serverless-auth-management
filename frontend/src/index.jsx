@@ -1,21 +1,31 @@
 import { StrictMode } from "react";
-import * as ReactDOM from 'react-dom';
+import ReactDOM from "react-dom/client";
+
+import { Provider } from 'react-redux'
+import { store } from '@/store'
+
 import { I18nextProvider } from 'react-i18next';
 import i18n from '@/i18n'
 
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
+
 import '@/index.css';
 import App from '@/App';
+
 import reportWebVitals from '@/reportWebVitals';
 
-const rootElement = document.getElementById("root");
+const root = ReactDOM.createRoot(document.getElementById("root"));
 
-ReactDOM.render(
+root.render(
   <StrictMode>
-    <I18nextProvider i18n={i18n}>
-      <App />
-    </I18nextProvider>
-  </StrictMode>,
-  rootElement
+    <Provider store={store}>
+      <I18nextProvider i18n={i18n}>
+        <App />
+        <ToastContainer />
+      </I18nextProvider>
+    </Provider>
+  </StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function
