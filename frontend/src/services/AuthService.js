@@ -20,7 +20,7 @@ export const authApi = createApi({
     baseQuery: cognitoBaseQuery(),
     endpoints: (build) => ({
         login: build.query({
-            query: (email, password) => ({
+            query: ({ email, password }) => ({
                 command: InitiateAuthCommand,
                 params: {
                     AuthFlow: AuthFlow,
@@ -34,11 +34,11 @@ export const authApi = createApi({
             transformResponse: (response, meta, arg) => response.data,
         }),
         completeNewPasswordChallenge: build.query({
-            query: (email, newPassword) => ({
+            query: ({ session, email, newPassword }) => ({
                 command: RespondToAuthChallengeCommand,
                 params: {
                     ChallengeName: 'NEW_PASSWORD_REQUIRED',
-                    Session: Session,
+                    Session: session,
                     ClientId: ClientId,
                     ChallengeResponses: {
                         USERNAME: email,
@@ -48,7 +48,7 @@ export const authApi = createApi({
             }),
         }),
         signUp: build.query({
-            query: (email, password) => ({
+            query: ({ email, password, username }) => ({
                 command: SignUpCommand,
                 params: {
                     ClientId: ClientId,

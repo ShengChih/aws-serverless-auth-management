@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import LoginForm from '@/components/LoginForm'
-import { useLoginQuery, useCompleteNewPasswordChallengeQuery } from './services/pokemon'
 
 import { login, completeNewPasswordChallenge } from '@/services/AuthService'
 
