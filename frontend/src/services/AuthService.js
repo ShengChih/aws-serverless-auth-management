@@ -11,7 +11,7 @@ import { createApi } from '@reduxjs/toolkit/query/react'
 import cognitoBaseQuery from '@/libs/queries/CognitoBaseQuery'
 
 
-const { Region, AuthFlow, ClientId, UserPoolId } = config
+const { Region, AuthFlow, ClientId } = config
 const client = new CognitoIdentityProviderClient({
     region: Region
 });
@@ -97,11 +97,14 @@ export function signUp(userInfo) {
     const { username, email, password } = userInfo
     return client.send(new SignUpCommand({
         ClientId: ClientId,
-        Username: email,
+        Username: username,
         Password: password,
         UserAttributes: [{
             "Name": "nickname",
             "Value": username
+        }, {
+            "Name": "email",
+            "Value": email
         }]
     }))
 }

@@ -1,6 +1,6 @@
 import config from '@/libs/cognito/config'
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
-const { Region, AuthFlow, ClientId, UserPoolId } = config
+const { Region } = config
 const client = new CognitoIdentityProviderClient({
     region: Region
 });

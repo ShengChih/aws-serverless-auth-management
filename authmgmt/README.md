@@ -11,10 +11,26 @@ authorName: 'Serverless, inc.'
 authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
 -->
 
+# Zip Lambda function
+
+```
+cd authmgmt
+zip -j outputs/zip_lambda/helloWorld.zip handlers/helloworld.py
+```
+
+# Create Lambda function and upload zip file
+
+```
+edit env.json
+poetry install
+
+python3 devtools/create_lambda_role # optional, check role exists
+python3 devtools/create_lambda_functions
+```
+
 # Serverless Framework Python Flask API on AWS
 
 This template demonstrates how to develop and deploy a simple Python Flask API service running on AWS Lambda using the traditional Serverless Framework.
-
 
 ## Anatomy of the template
 

@@ -27,18 +27,113 @@ resources:
                     - Ref: 'AuthServiceBucket'
                     - '/*'
 
-    AuthServiceCognitoUserPool:
+    ServiceDynamoDBTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Customers
+        AttributeDefinitions:
+          - AttributeName: CustomerId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: CustomerId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+
+
+    ServiceLambdaRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: ServiceLambda
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: DynamoDBWriteAccess
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                        - ':'
+                        - - 'arn:aws:logs'
+                          - Ref: 'AWS::Region'
+                          - Ref: 'AWS::AccountId'
+                          - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - dynamodb:PutItem
+                  Resource:
+                    'Fn::GetAtt': [ServiceDynamoDBTable, Arn]
+
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: 'api-with-auth'
+        EndpointConfiguration:
+          Types:
+            - EDGE
+
+
+    AppUserMgmt:
       Type: AWS::Cognito::UserPool
       Properties:
         UserPoolName: palapalado.tk
+        AliasAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        VerificationMessageTemplate:
+          DefaultEmailOption: CONFIRM_WITH_LINK
 
-    AuthServiceCognitoUserPoolClient:
+    AppDomain:
+      Type: AWS::Cognito::UserPoolDomain
+      Properties: 
+        UserPoolId:
+          Ref: 'AppUserMgmt'
+        Domain: 'aguard'
+
+
+
+    AppClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
         ClientName: palapaladoAuthmgmt
         GenerateSecret: false
         UserPoolId:
-          Ref: 'AuthServiceCognitoUserPool'
+          Ref: 'AppUserMgmt'
+        CallbackURLs:
+        - !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com
+        ExplicitAuthFlows:
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_PASSWORD_AUTH
+
+
+
+    ApiAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: ApiAuthorizer
+        RestApiId:
+          Ref: ApiGatewayRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt: [AppUserMgmt, Arn]
+        IdentitySource: method.request.header.Authorization
+      DependsOn:
+        - ApiGatewayRestApi
+
 
   Outputs:
     AuthServiceBucketURL:
@@ -46,38 +141,46 @@ resources:
       Value: 
         "Fn::GetAtt": [ AuthServiceBucket, WebsiteURL ]
 
-    AuthServiceCognitoUserPoolId:
+    AppUserMgmtId:
       Description: 'Palapalado Cognito User Pool ID'
       Value:
-        Ref: 'AuthServiceCognitoUserPool'
+        Ref: 'AppUserMgmt'
 
-    AuthServiceCognitoUserPoolClientId:
+    AppClientId:
       Description: 'Palapalado Cognito User Pool Client ID'
       Value:
-        Ref: 'AuthServiceCognitoUserPoolClient'
-#custom:
-#  wsgi:
-#
+        Ref: 'AppClient'
+
+    ServiceDynamoDBTable:
+      Description: 'DynamoDB ARN'
+      Value:
+        'Fn::GetAtt': [ServiceDynamoDBTable, Arn]
+
 provider:
   name: aws
   region: us-east-1
   profile: serverless-admin
   stage: ${opt:stage, 'dev'}
-#  runtime: python3.8
-#  stage: dev
-#  profile: serverless-agent
-#
-#functions:
-#  api:
-#    handler: wsgi_handler.handler
-#    events:
-#      - httpApi: '*'
-#
+
+functions:
+  api:
+    runtime: python3.9
+    handler: wsgi_handler.handler
+    events:
+      - http:
+          method: any
+          path: /
+          cors: true
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId:
+              Ref: ApiAuthorizer
+  
+
 plugins:
   - serverless-s3-sync
-
-#  - serverless-wsgi
-#  - serverless-python-requirements
+  - serverless-wsgi 
+  - serverless-python-requirements
 
 custom:
   s3Sync:
@@ -85,3 +188,5 @@ custom:
       localDir: ../wild-rydes/public # required
       deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
 
+  wsgi:
+    app: api.app
