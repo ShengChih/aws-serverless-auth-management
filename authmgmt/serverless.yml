@@ -2,6 +2,54 @@ service: authmgmt
 
 frameworkVersion: '3'
 
+package:
+  patterns:
+    - 'wsgi_handler.py'
+    - 'serverless_wsgi.py'
+    - 'api.py'
+    - '.serverless-wsgi'
+    - '!node_modules/**'
+    - '!model/**'
+    - '!.vscode/**'
+    - '!libs'
+    - '!.serverless'
+    - '!runtime'
+    - '!.gitignore'
+    - '!env_json_loader.py'
+    - '!.requirements'
+    - '!.requirements.zip'
+    - '!env.json'
+    - '!env.example.json'
+    - '!package-lock.json'
+    - '!package.json'
+    - '!pnpm-lock.json'
+    - '!poetry.lock'
+    - '!pyproject.toml'
+    - '!README.md'
+    - '!__pycache__'
+    - '!pnpm-lock.yaml'
+  exclude:
+    - node_modules/**
+    - model/**
+    - .vscode/**
+    - libs
+    - .serverless
+    - runtime
+    - .gitignore
+    - env_json_loader.py
+    - .requirements
+    - .requirements.zip
+    - env.json
+    - env.example.json
+    - package-lock.json
+    - package.json
+    - pnpm-lock.json
+    - poetry.lock
+    - pyproject.toml
+    - README.md
+    - __pycache__
+    - pnpm-lock.yaml
+
 resources:
   Resources:
     AuthServiceBucket:
@@ -27,25 +75,51 @@ resources:
                     - Ref: 'AuthServiceBucket'
                     - '/*'
 
-    ServiceDynamoDBTable:
+    UserDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Customers
+        TableName: ${self:custom.UserDynamoDBTable}
         AttributeDefinitions:
-          - AttributeName: CustomerId
+          - AttributeName: UserId
             AttributeType: S
         KeySchema:
-          - AttributeName: CustomerId
+          - AttributeName: UserId
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 
+    RoleDynamoTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        BillingMode: PROVISIONED
+        AttributeDefinitions:
+          - AttributeName: RoleId
+            AttributeType: S
+          - AttributeName: RoleName
+            AttributeType: S
+        GlobalSecondaryIndexes:
+          - IndexName: RoleName
+            KeySchema:
+              - AttributeName: RoleName
+                KeyType: HASH
+            Projection: 
+              ProjectionType: ALL
+            ProvisionedThroughput: 
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+        KeySchema:
+          - AttributeName: RoleId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.RoleTableName}
 
-    ServiceLambdaRole:
+    LambdaRole:
       Type: AWS::IAM::Role
       Properties:
-        RoleName: ServiceLambda
+        RoleName: LambdaRole
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
           Statement:
@@ -55,11 +129,12 @@ resources:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: DynamoDBWriteAccess
+          - PolicyName: ErpOCRDynamoDBWriteAccess
             PolicyDocument:
               Version: '2012-10-17'
               Statement:
-                - Effect: Allow
+                - Sid: LambdaCloudWatchLog
+                  Effect: Allow
                   Action:
                     - logs:CreateLogGroup
                     - logs:CreateLogStream
@@ -71,22 +146,70 @@ resources:
                           - Ref: 'AWS::Region'
                           - Ref: 'AWS::AccountId'
                           - 'log-group:/aws/lambda/*:*:*'
-                - Effect: Allow
+                - Sid: LambdaDynamoDBTableAccess
+                  Effect: Allow
                   Action:
+                    - dynamodb:BatchGetItem
+                    - dynamodb:BatchWriteItem
+                    - dynamodb:ConditionCheckItem
                     - dynamodb:PutItem
+                    - dynamodb:DescribeTable
+                    - dynamodb:DeleteItem
+                    - dynamodb:GetItem
+                    - dynamodb:Scan
+                    - dynamodb:Query
+                    - dynamodb:UpdateItem
                   Resource:
-                    'Fn::GetAtt': [ServiceDynamoDBTable, Arn]
+                    - 'Fn::GetAtt': [UserDynamoTable, Arn]
+                    - 'Fn::GetAtt': [RoleDynamoTable, Arn]
+                - Sid: DynamoDBIndexAndStreamAccess
+                  Effect: Allow
+                  Action:
+                    - dynamodb:GetShardIterator
+                    - dynamodb:Scan
+                    - dynamodb:Query
+                    - dynamodb:DescribeStream
+                    - dynamodb:GetRecords
+                    - dynamodb:ListStreams
+                  Resource:
+                    - 'Fn::Join':
+                        - '/'
+                        - - 'Fn::GetAtt': [UserDynamoTable, Arn]
+                          - 'index'
+                          - '*'
+                    - 'Fn::Join':
+                        - '/'
+                        - - 'Fn::GetAtt': [RoleDynamoTable, Arn]
+                          - 'index'
+                          - '*'
+                    - 'Fn::Join':
+                        - '/'
+                        - - 'Fn::GetAtt': [UserDynamoTable, Arn]
+                          - 'steam'
+                          - '*'
+                    - 'Fn::Join':
+                        - '/'
+                        - - 'Fn::GetAtt': [RoleDynamoTable, Arn]
+                          - 'steam'
+                          - '*'
+                - Sid: DynamoDBDescribeLimitsAccess
+                  Effect: Allow
+                  Action: dynamodb:DescribeLimits
+                  Resource:
+                    - 'Fn::GetAtt': [UserDynamoTable, Arn]
+                    - 'Fn::GetAtt': [RoleDynamoTable, Arn]
+                    - 'Fn::Join':
+                        - '/'
+                        - - 'Fn::GetAtt': [UserDynamoTable, Arn]
+                          - 'index'
+                          - '*'
+                    - 'Fn::Join':
+                        - '/'
+                        - - 'Fn::GetAtt': [RoleDynamoTable, Arn]
+                          - 'index'
+                          - '*'
 
-    ApiGatewayRestApi:
-      Type: AWS::ApiGateway::RestApi
-      Properties:
-        Name: 'api-with-auth'
-        EndpointConfiguration:
-          Types:
-            - EDGE
-
-
-    AppUserMgmt:
+    UserPool:
       Type: AWS::Cognito::UserPool
       Properties:
         UserPoolName: palapalado.tk
@@ -97,28 +220,24 @@ resources:
         VerificationMessageTemplate:
           DefaultEmailOption: CONFIRM_WITH_LINK
 
-    AppDomain:
+    UserPoolDomain:
       Type: AWS::Cognito::UserPoolDomain
       Properties: 
         UserPoolId:
-          Ref: 'AppUserMgmt'
-        Domain: 'aguard'
+          Ref: 'UserPool'
+        Domain: 'guard'
 
 
-
-    AppClient:
+    UserPoolWebClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
         ClientName: palapaladoAuthmgmt
         GenerateSecret: false
         UserPoolId:
-          Ref: 'AppUserMgmt'
-        CallbackURLs:
-        - !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com
+          Ref: 'UserPool'
         ExplicitAuthFlows:
           - ALLOW_REFRESH_TOKEN_AUTH
           - ALLOW_USER_PASSWORD_AUTH
-
 
 
     ApiAuthorizer:
@@ -129,10 +248,8 @@ resources:
           Ref: ApiGatewayRestApi
         Type: COGNITO_USER_POOLS
         ProviderARNs:
-          - Fn::GetAtt: [AppUserMgmt, Arn]
+          - Fn::GetAtt: [UserPool, Arn]
         IdentitySource: method.request.header.Authorization
-      DependsOn:
-        - ApiGatewayRestApi
 
 
   Outputs:
@@ -141,20 +258,25 @@ resources:
       Value: 
         "Fn::GetAtt": [ AuthServiceBucket, WebsiteURL ]
 
-    AppUserMgmtId:
+    UserPoolId:
       Description: 'Palapalado Cognito User Pool ID'
       Value:
-        Ref: 'AppUserMgmt'
+        Ref: 'UserPool'
 
-    AppClientId:
+    UserPoolWebClientId:
       Description: 'Palapalado Cognito User Pool Client ID'
       Value:
-        Ref: 'AppClient'
+        Ref: 'UserPoolWebClient'
 
-    ServiceDynamoDBTable:
+    UserDynamoDBTable:
       Description: 'DynamoDB ARN'
       Value:
-        'Fn::GetAtt': [ServiceDynamoDBTable, Arn]
+        'Fn::GetAtt': [UserDynamoDBTable, Arn]
+
+    RoleDynamoDBTable:
+      Description: 'DynamoDB ARN'
+      Value:
+        'Fn::GetAtt': [RoleDynamoDBTable, Arn]
 
 provider:
   name: aws
@@ -162,31 +284,50 @@ provider:
   profile: serverless-admin
   stage: ${opt:stage, 'dev'}
 
+layers:
+  py38Runtime:
+    package:
+      artifact: runtime/python38_layer_runtime.zip
+
 functions:
   api:
-    runtime: python3.9
+    runtime: python3.8
     handler: wsgi_handler.handler
+    role: LambdaRole
+    layers:
+      - !Ref Py38RuntimeLambdaLayer
     events:
+       - http:
+          method: get
+          path: health
+          cors: true
+          integration: mock
+          response:
+            template:
+              application/json: '{"statusCode": 200}'
+
       - http:
           method: any
-          path: /
+          path: '{proxy+}'
           cors: true
           authorizer:
             type: COGNITO_USER_POOLS
             authorizerId:
               Ref: ApiAuthorizer
-  
 
 plugins:
   - serverless-s3-sync
   - serverless-wsgi 
-  - serverless-python-requirements
 
 custom:
+  UserTableName: 'users'
+  RoleTableName: 'roles'
   s3Sync:
     - bucketName: palapalado.tk # required
       localDir: ../wild-rydes/public # required
-      deleteRemoved: true # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
+      deleteRemoved: false # optional, indicates whether sync deletes files no longer present in localDir. Defaults to 'true'
 
   wsgi:
     app: api.app
+    packRequirements: false
+    pythonBin: /home/ec2-user/.cache/pypoetry/virtualenvs/authmgmt-pKhbGNW1-py3.10/bin/python
