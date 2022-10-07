@@ -78,7 +78,7 @@ resources:
     UserDynamoDBTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:custom.UserDynamoDBTable}
+        TableName: ${self:custom.UserTableName}
         AttributeDefinitions:
           - AttributeName: UserId
             AttributeType: S
@@ -297,23 +297,22 @@ functions:
     layers:
       - !Ref Py38RuntimeLambdaLayer
     events:
-       - http:
-          method: get
-          path: health
-          cors: true
-          integration: mock
-          response:
-            template:
-              application/json: '{"statusCode": 200}'
-
       - http:
-          method: any
-          path: '{proxy+}'
-          cors: true
-          authorizer:
-            type: COGNITO_USER_POOLS
-            authorizerId:
-              Ref: ApiAuthorizer
+        method: get
+        path: health
+        cors: true
+        integration: mock
+        response:
+          template:
+            application/json: '{"statusCode": 200}'
+      - http:
+        method: any
+        path: '{proxy+}'
+        cors: true
+        authorizer:
+          type: COGNITO_USER_POOLS
+          authorizerId:
+            Ref: ApiAuthorizer
 
 plugins:
   - serverless-s3-sync
@@ -330,4 +329,5 @@ custom:
   wsgi:
     app: api.app
     packRequirements: false
-    pythonBin: /home/ec2-user/.cache/pypoetry/virtualenvs/authmgmt-pKhbGNW1-py3.10/bin/python
+    #pythonBin: /home/ec2-user/.cache/pypoetry/virtualenvs/authmgmt-pKhbGNW1-py3.10/bin/python
+    pythonBin: /home/ec2-user/aws-ec2-power-switcher/.venv/bin/python
